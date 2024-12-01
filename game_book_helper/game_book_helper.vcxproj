@@ -19,10 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Action.cpp" />
+    <ClCompile Include="ActionHistoryManager.cpp" />
     <ClCompile Include="GameHelper.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Action.h" />
+    <ClInclude Include="ActionHistoryManager.h" />
     <ClInclude Include="GameHelper.h" />
     <ClInclude Include="GameState.h" />
   </ItemGroup>
