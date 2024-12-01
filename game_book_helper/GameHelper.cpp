@@ -71,7 +71,7 @@ int GameHelper::play()
                 continue;
             }
             go(to);
-            show(findRoot(cursor));
+            show(findRoot(state_.cursor));
         }
         else if (cmd == "add")
         {
@@ -81,8 +81,8 @@ int GameHelper::play()
                 err("input like: add [num]");
                 continue;
             }
-            add(cursor, to);
-            show(findRoot(cursor));
+            add(state_.cursor, to);
+            show(findRoot(state_.cursor));
         }
         else if (cmd == "backlog")
         {
@@ -103,11 +103,11 @@ int GameHelper::play()
                 err("input like: addBacklog [str]");
                 continue;
             }
-            addBacklog(cursor, to);
+            addBacklog(state_.cursor, to);
         }
         else if (cmd == "memo")
         {
-            memo(cursor);
+            memo(state_.cursor);
             continue;
         }
         else if (cmd == "addmemo")
@@ -119,8 +119,8 @@ int GameHelper::play()
                 err("input like: addmemo [str]");
                 continue;
             }
-            addMemo(cursor, desc);
-            memo(cursor);
+            addMemo(state_.cursor, desc);
+            memo(state_.cursor);
         }
         else if (cmd == "clue")
         {
@@ -141,7 +141,7 @@ int GameHelper::play()
         }
         else if (cmd == "show")
         {
-            show(findRoot(cursor));
+            show(findRoot(state_.cursor));
             continue;
         }
         else if (cmd == "showall")
@@ -189,31 +189,31 @@ void GameHelper::err(std::string_view msg)
 
 void GameHelper::init(int n)
 {
-    nodes = std::vector<node_t>(n + 5);
+    state_.nodes = std::vector<node_t>(n + 5);
     for (int i : std::views::iota(0, n + 5))
     {
-        nodes[i].id = i;
+        state_.nodes[i].id = i;
     }
 }
 
 void GameHelper::go(int to)
 {
-    cursor = to;
-    if (!nodes[to].parent)
+    state_.cursor = to;
+    if (!state_.nodes[to].parent)
     {
-        nodes[to].parent = to;
+        state_.nodes[to].parent = to;
     }
 }
 
 void GameHelper::add(int from, int to)
 {
-    nodes[to].parent = from;
-    nodes[from].childs.insert(to);
+    state_.nodes[to].parent = from;
+    state_.nodes[from].childs.insert(to);
 }
 
 void GameHelper::backlog(const std::string& clue)
 {
-    for (const auto backlog : backlogs[clue])
+    for (const auto backlog : state_.backlogs[clue])
     {
         std::print("{}⊥{} ", backlog.first, backlog.second);
     }
@@ -228,20 +228,23 @@ void GameHelper::addBacklog(int from, const std::string& to)
             std::stoi(token);
         }
         catch (std::invalid_argument) {
-            backlogs[token].emplace_back(from, to);
-            clues[token] = std::nullopt;
+            state_.backlogs[token].emplace_back(from, to);
+            state_.clues[token] = std::nullopt;
         }
     }
 }
 
 void GameHelper::clue()
 {
-    if (clues.empty())
+    if (state_.clues.empty())
     {
         return;
     }
-    std::print("{}:{}", clues.begin()->first, clues.begin()->second ? *clues.begin()->second : -1);
-    for (const auto& clue : clues | std::views::drop(1))
+
+    const auto& frontClue = state_.clues.begin();
+    std::print("{}:{}", frontClue->first, frontClue->second.value_or(-1));
+
+    for (const auto& clue : state_.clues | std::views::drop(1))
     {
         std::print(", {}:{}", clue.first, clue.second ? *clue.second : -1);
     }
@@ -250,9 +253,9 @@ void GameHelper::clue()
 
 void GameHelper::setClue(const std::string& clue, int x)
 {
-    clues[clue] = x;
+    state_.clues[clue] = x;
 
-    for (const auto backlog : backlogs[clue])
+    for (const auto backlog : state_.backlogs[clue])
     {
         int sum = 0;
         if (std::ranges::all_of(parse(backlog.second), [&sum, this](const auto token) {
@@ -261,9 +264,9 @@ void GameHelper::setClue(const std::string& clue, int x)
                 return true;
             }
             catch (std::invalid_argument) {
-                if (clues[token].has_value())
+                if (state_.clues[token].has_value())
                 {
-                    sum += *clues[token];
+                    sum += *state_.clues[token];
                     return true;
                 }
             }
@@ -278,23 +281,23 @@ void GameHelper::setClue(const std::string& clue, int x)
 
 void GameHelper::memo(int id)
 {
-    std::print("{}\n", nodes[id].desc);
+    std::print("{}\n", state_.nodes[id].desc);
 }
 
 void GameHelper::addMemo(int id, const std::string& adding_desc)
 {
-    auto& desc = nodes[id].desc;
+    auto& desc = state_.nodes[id].desc;
     desc += desc.empty() ? adding_desc : ", " + adding_desc;
 }
 
 void GameHelper::show(int id, const std::string& prefix, bool isLast)
 {
-    const auto& node = nodes[id];
+    const auto& node = state_.nodes[id];
 
     std::print("{}{}{}\t\t{}\n",
         prefix,
         (isLast ? "戌式式" : "戍式式"),
-        cursor == id ? std::format("@Ⅱ{}", id) : std::to_string(id),
+        state_.cursor == id ? std::format("@Ⅱ{}", id) : std::to_string(id),
         node.desc.empty() ? "" : "memo: " + node.desc);
 
     for (int i = 0; int child : node.childs) {
@@ -304,7 +307,7 @@ void GameHelper::show(int id, const std::string& prefix, bool isLast)
 
 void GameHelper::showAll()
 {
-    for (auto node : nodes | std::views::drop(1) | std::views::filter(isRoot))
+    for (auto node : state_.nodes | std::views::drop(1) | std::views::filter(isRoot))
     {
         show(node.id);
     }
@@ -312,9 +315,9 @@ void GameHelper::showAll()
 
 int GameHelper::findRoot(int id)
 {
-    while (nodes[id].parent != id)
+    while (state_.nodes[id].parent != id)
     {
-        id = nodes[id].parent;
+        id = state_.nodes[id].parent;
     }
     return id;
 }
@@ -344,13 +347,13 @@ void GameHelper::load()
         {
             int to;
             file >> to;
-            add(cursor, to);
+            add(state_.cursor, to);
         }
         else if (cmd == "addbacklog")
         {
             std::string to;
             file >> to;
-            addBacklog(cursor, to);
+            addBacklog(state_.cursor, to);
         }
         else if (cmd == "setclue" || cmd == "addclue")
         {
@@ -364,7 +367,7 @@ void GameHelper::load()
             std::string desc;
             file.ignore();
             std::getline(file, desc);
-            addMemo(cursor, desc);
+            addMemo(state_.cursor, desc);
         }
     }
 

@@ -1,17 +1,9 @@
 #pragma once
 
-#include <string>
-#include <unordered_map>
-#include <optional>
-#include <chrono>
-#include <set>
+#include "GameState.h"
 
-struct node_t {
-    int id{};
-    int parent{};
-    std::set<int> childs;
-    std::string desc;
-};
+#include <string>
+#include <chrono>
 
 class GameHelper
 {
@@ -39,8 +31,6 @@ private:
 
     const std::chrono::system_clock::time_point startedAt;
     std::string saveFileName;
-    int cursor;
-    std::vector<node_t> nodes;
-    std::unordered_map<std::string, std::optional<int>> clues;
-    std::unordered_map<std::string, std::vector<std::pair<int, std::string>>> backlogs;
+
+    game_state_t state_;
 };
