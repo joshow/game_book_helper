@@ -8,7 +8,7 @@
 
 constexpr std::string_view gameNames[] = { "늑대인간_마을에서_탈출", "쌍둥이_섬에서_탈출", "10인의_우울한_용의자" };
 
-bool isRoot(const node& x) {
+bool isRoot(const node_t& x) {
     return x.id == x.parent;
 }
 
@@ -189,7 +189,7 @@ void GameHelper::err(std::string_view msg)
 
 void GameHelper::init(int n)
 {
-    nodes = std::vector<node>(n + 5);
+    nodes = std::vector<node_t>(n + 5);
     for (int i : std::views::iota(0, n + 5))
     {
         nodes[i].id = i;

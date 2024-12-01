@@ -6,7 +6,7 @@
 #include <chrono>
 #include <set>
 
-struct node {
+struct node_t {
     int id{};
     int parent{};
     std::set<int> childs;
@@ -40,7 +40,7 @@ private:
     const std::chrono::system_clock::time_point startedAt;
     std::string saveFileName;
     int cursor;
-    std::vector<node> nodes;
+    std::vector<node_t> nodes;
     std::unordered_map<std::string, std::optional<int>> clues;
     std::unordered_map<std::string, std::vector<std::pair<int, std::string>>> backlogs;
 };
